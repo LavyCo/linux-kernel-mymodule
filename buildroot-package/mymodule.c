@@ -7,6 +7,7 @@
 
 static dev_t dev_num;
 static struct cdev my_cdev;
+static struct class *my_class;
 static const struct file_operations my_fops = {
     .owner = THIS_MODULE,
 };
@@ -34,7 +35,24 @@ static int __init mymod_init(void)
         unregister_chrdev_region(dev_num, 1);
         return ret;
     }
-    
+    my_class = class_create("mymodule");
+
+    if (IS_ERR(my_class))
+    {
+        printk(KERN_ERR "class_create failed\n");
+        ret = PTR_ERR(my_class);
+        cdev_del(&my_cdev);
+        unregister_chrdev_region(dev_num, 1);
+        return ret;
+    }
+    if (IS_ERR(device_create(my_class, NULL, dev_num, NULL, "mymodule")))
+    {
+        printk(KERN_ERR "device_create failed\n");
+        class_destroy(my_class);
+        cdev_del(&my_cdev);
+        unregister_chrdev_region(dev_num, 1);
+        return -ENOMEM;
+    }
 
     printk(KERN_INFO "Major number: %d\n", MAJOR(dev_num));
 
@@ -43,6 +61,11 @@ static int __init mymod_init(void)
 
 static void __exit mymod_exit(void)
 {
+    device_destroy(my_class, dev_num);
+    class_destroy(my_class);
+
+
+
     cdev_del(&my_cdev);
     unregister_chrdev_region(dev_num, 1);
 
