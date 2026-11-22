@@ -1,0 +1,12 @@
+# Compiled test executables
+/test_mymodule
+/test_circular_buffer
+
+# Kernel build artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.cmd
+*.order
+*.symvers
